@@ -12,6 +12,8 @@ from scipy.spatial.distance import cosine
  
 app = Flask(__name__)
 
+curr_question=""
+
 from database_preprocessing import preprocess_database
 db=preprocess_database()
 
@@ -41,9 +43,9 @@ def similarity_matching(preprocessed_user_message, word_embedding_database, defa
     # if the highest similarity is lower the predefined threshold
     # default reply will be sent back to the user
     if max_similarity >= default_reply_thres:
-        return max_answer
+        return max_question,max_answer
     else:
-        return "Please rephrase your question."
+        return None,"Please rephrase your question."
  
 @app.route("/wa")
 def wa_hello():
@@ -51,14 +53,19 @@ def wa_hello():
  
 @app.route("/wasms", methods=['POST'])
 def wa_sms_reply():
+    global curr_question
     """Respond to incoming calls with a simple text message."""
     # Fetch the message
     msg = request.form.get('Body').lower()  # Reading the messsage from the whatsapp
     logger.info("msg-->",msg)
     resp = MessagingResponse()
     reply=resp.message()
-    preprocessed_text=get_corpus(msg)
-    reply.body(similarity_matching(preprocessed_text,db,0.8))
+    if curr_question:
+        reply.body(curr_question)
+    else:
+        preprocessed_text=get_corpus(msg)
+        curr_question, ans=similarity_matching(preprocessed_text,db,0.8)
+        reply.body(ans)
     return str(resp)
  
 if __name__ == "__main__":

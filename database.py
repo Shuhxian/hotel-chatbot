@@ -7,7 +7,7 @@ import uuid
 dbname="hotel_chatbot"
 room_type=["Single", "Deluxe"]
 room_price=[50,70]
-room_unit=[1,1]
+room_unit=[5,3]
 
 def execute(query):
     results=True
@@ -20,6 +20,8 @@ def execute(query):
         if connection.is_connected():
             cursor = connection.cursor()
             cursor.execute(query)
+            for x in cursor:
+                print(x)
     except Error as e:
         print("Error while connecting to MySQL", e)
         results=False
@@ -60,7 +62,7 @@ def add_availability(dbname):
         for i in range(len(room_type)):
             execute("""
             INSERT INTO {}.hotel VALUES ({}, CURDATE() + INTERVAL {} DAY, {}) 
-            """.format(dbname,i, day, room_unit[i])
+            """.format(dbname,i+1, day, room_unit[i])
             )
 
 def create_boooking_table(dbname):
@@ -74,9 +76,9 @@ def create_boooking_table(dbname):
         )
     """.format(dbname))
 
-#BOOKING: id, start_date, end_date, room_type, price
-#HOTEL: date, room_type, num_available
-#ROOM: room_type, price, num
+#BOOKING: id, start_date, end_date, room_id, price
+#HOTEL: date, room_id, num_available
+#ROOM: room_id, room_type, price, num
 def create_db():
     execute("CREATE DATABASE {}".format(dbname))
     if create_room_table(dbname):
@@ -90,7 +92,7 @@ def create_db():
 def auto_update_db():
     return
 
-def get_availability(dbname,room_type,start_date,end_date):
+def get_availability(dbname,start_date,end_date,room_type):
     results=0
     try:
         connection = mysql.connector.connect(
@@ -110,6 +112,7 @@ def get_availability(dbname,room_type,start_date,end_date):
             GROUP BY room_type
             """.format(start_date,end_date,room_type))
             for x in cursor:
+                print(x)
                 results=x[0]
     except Error as e:
         print("Error while connecting to MySQL", e)
@@ -121,7 +124,7 @@ def get_availability(dbname,room_type,start_date,end_date):
             return results
 
 def make_booking(dbname,start_date,end_date,room_type):
-    if not get_availability(dbname,room_type,start_date,end_date):
+    if not get_availability(dbname,start_date,end_date,room_type):
         print("Room full")
         return None
     try:
@@ -162,10 +165,65 @@ def make_booking(dbname,start_date,end_date,room_type):
     return id
     #Provide suggestion such as breakfast, spa, room service
 
+def get_booking_details(dbname, id):
+    start_date,end_date,room_type,price=None,None,None,None
+    try:
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="password",
+            database=dbname
+        )
+        if connection.is_connected():
+            cursor = connection.cursor()
+            cursor.execute("""
+            SELECT * FROM booking LEFT JOIN room
+            ON booking.room_id=room.room_id WHERE id='{}'
+            """.format(id))
+            for x in cursor:
+                print(x)
+                start_date=x[1]
+                end_date=x[2]
+                room_type=x[6]
+                price=x[4]
+    except Error as e:
+        print("Error while connecting to MySQL", e)
+    finally:
+        if connection.is_connected():
+            connection.commit()
+            cursor.close()
+            connection.close()
+    return start_date,end_date,room_type,price
+
 def cancel_booking(dbname, id):
     return execute("""
     DELETE FROM {}.booking WHERE id='{}'
     """.format(dbname,id))
+
+def get_room_types(dbname):
+    room_types=[]
+    try:
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="password",
+            database=dbname
+        )
+        if connection.is_connected():
+            cursor = connection.cursor()
+            cursor.execute("""
+            SELECT * FROM room
+            """)
+            for x in cursor:
+                room_types.append(x[1])
+    except Error as e:
+        print("Error while connecting to MySQL", e)
+    finally:
+        if connection.is_connected():
+            connection.commit()
+            cursor.close()
+            connection.close()
+    return room_types
 
 def get_facilities():
     return ["Spa","Pool"]
@@ -179,9 +237,11 @@ def get_nearby_attractions():
 def get_hotel_contact():
     return "+968 9406 0891"
 
-execute("""DROP DATABASE {}""".format(dbname))
-create_db()
-print(get_availability(dbname,"Single","2022-12-19","2022-12-20"))
-make_booking(dbname,"2022-12-19","2022-12-22","Single")
-make_booking(dbname,"2022-12-22","2022-12-23","Single")
-cancel_booking(dbname,input())
+if __name__=="__main__":
+    execute("""DROP DATABASE {}""".format(dbname))
+    create_db()
+    execute("""SELECT * FROM {}.hotel""".format(dbname))
+    print(get_availability(dbname,"2022-12-24","2022-12-26","Single"))
+    make_booking(dbname,"2022-12-19","2022-12-22","Single")
+    #make_booking(dbname,"2022-12-22","2022-12-23","Single")
+    print(get_booking_details(dbname,input()))

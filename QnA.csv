@@ -1,5 +1,11 @@
 ﻿Question,Answer
-I would like to make a reservation.,You would like to make a reservation.
-I would like to check for room availability.,You would like to check for room availability.
-I would like to modify a reservation.,You would like to modify a reservation.
-I would like to cancel a reservation.,You would like to cancel a reservation.
+I would like to make a reservation.,Please provide the starting date in the format YYYY-MM-DD
+I would like to check for room availability.,Please provide the starting date in the format YYYY-MM-DD
+I would like to cancel a reservation.,Please provide the booking ID.
+Do you provide parking space?,"Yes, we provide parking space for our guests."
+What facilities do you have?,Refer to list.
+What are some of the restaurants nearby?,Refer to list.
+What are some of the attractions nearby?,Refer to list.
+How do I contact you?,You may reach out to us at +968 9406 0891.
+I would like to check a reservation.,Please provide the booking ID.
+What are the type of rooms that you offer?,Refer to list.

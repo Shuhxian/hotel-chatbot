@@ -9,7 +9,7 @@ from word_embedding import get_word_embedding
 from twilio.twiml.messaging_response import MessagingResponse
 import pandas as pd
 from scipy.spatial.distance import cosine
-from database import get_facilities,get_nearby_restaurants,get_nearby_attractions,get_availability,get_booking_details,make_booking,cancel_booking, get_room_types
+from database import create_db, get_facilities,get_nearby_restaurants,get_nearby_attractions,get_availability,get_booking_details,make_booking,cancel_booking, get_room_types
 import datetime
 
 app = Flask(__name__)
@@ -69,7 +69,6 @@ def wa_sms_reply():
         curr_question=""
         responses=[]
         return str(resp)
-    print(curr_question)
     if not curr_question:
         preprocessed_text=get_corpus(msg)
         curr_question, ans=similarity_matching(preprocessed_text,db,0.8)
@@ -158,7 +157,7 @@ def wa_sms_reply():
                     curr_question=""
         elif curr_question=="Please provide me the booking ID.":
             if responses[0]=="Check":
-                start_date,end_date,room_type,price=get_booking_details(dbname,msg)
+                start_date,end_date,room_id,room_type,price=get_booking_details(dbname,msg)
                 if not start_date:
                     ans="The booking ID does not exist. Please check again."
                 else:
@@ -182,4 +181,5 @@ if __name__ == "__main__":
     if args.logging:
         logging.basicConfig(level=logging.INFO)
         logger.setLevel(logging.INFO)
+    create_db()
     app.run(debug=True)

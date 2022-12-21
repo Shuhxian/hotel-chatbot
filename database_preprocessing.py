@@ -10,7 +10,6 @@ def preprocess_database():
     processed_database={}
     for _,row in df.iterrows():
         question, answer=row
-        print(question)
         processed_database[question] = get_word_embedding(get_corpus(question))
     return processed_database
 

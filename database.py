@@ -166,7 +166,7 @@ def make_booking(dbname,start_date,end_date,room_type):
     #Provide suggestion such as breakfast, spa, room service
 
 def get_booking_details(dbname, id):
-    start_date,end_date,room_type,price=None,None,None,None
+    start_date,end_date,room_id,room_type,price=None,None,None,None,None
     try:
         connection = mysql.connector.connect(
             host="localhost",
@@ -184,6 +184,7 @@ def get_booking_details(dbname, id):
                 print(x)
                 start_date=x[1]
                 end_date=x[2]
+                room_id=x[3]
                 room_type=x[6]
                 price=x[4]
     except Error as e:
@@ -193,12 +194,19 @@ def get_booking_details(dbname, id):
             connection.commit()
             cursor.close()
             connection.close()
-    return start_date,end_date,room_type,price
+    return start_date,end_date,room_id,room_type,price
 
 def cancel_booking(dbname, id):
-    return execute("""
+    start_date,end_date,room_id,room_type,price=get_booking_details(dbname,id)
+    if start_date:
+        execute("""
     DELETE FROM {}.booking WHERE id='{}'
     """.format(dbname,id))
+        execute("""
+        UPDATE {}.hotel SET num_available=num_available+1 WHERE date>='{}' AND date<'{}' AND room_id={}
+        """.format(dbname,start_date,end_date,room_id))
+        return True
+    return False
 
 def get_room_types(dbname):
     room_types=[]
@@ -238,10 +246,10 @@ def get_hotel_contact():
     return "+968 9406 0891"
 
 if __name__=="__main__":
-    execute("""DROP DATABASE {}""".format(dbname))
     create_db()
     execute("""SELECT * FROM {}.hotel""".format(dbname))
     print(get_availability(dbname,"2022-12-24","2022-12-26","Single"))
     make_booking(dbname,"2022-12-19","2022-12-22","Single")
     #make_booking(dbname,"2022-12-22","2022-12-23","Single")
     print(get_booking_details(dbname,input()))
+    execute("""DROP DATABASE {}""".format(dbname))

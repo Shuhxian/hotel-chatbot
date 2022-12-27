@@ -136,30 +136,42 @@ def wa_sms_reply():
             except:
                 ans="Date format invalid. Please try again."
         elif curr_question=="Please provide the desired room type.":
-            if responses[0]=="Make":
-                id=make_booking(dbname,responses[1],responses[2],msg)
-                if id:
-                    ans="Booking successful. Your booking ID is {}.".format(id)
-                    responses=[]
-                    curr_question=""
-                else:
-                    ans="Sorry, the desired room type is full for the specified date. Please try with other dates."
-                    responses=[]
-                    curr_question=""
+            type_check=True
+            if "single" in msg.lower():
+                room="Single"
+            elif "deluxe" in msg.lower():
+                room="Deluxe"
             else:
-                if get_availability(dbname,responses[1],responses[2],msg)>0:
-                    ans="Yes, there are rooms available."
-                    responses=[]
-                    curr_question=""
+                ans="Sorry, we only provide Single and Deluxe rooms."
+                responses=[]
+                curr_question=""
+            if type_check:
+                if responses[0]=="Make":
+                    id=make_booking(dbname,responses[1],responses[2],room)
+                    if id:
+                        ans="Booking successful. Your booking ID is {}.".format(id)
+                        responses=[]
+                        curr_question=""
+                    else:
+                        ans="Sorry, the desired room type is full for the specified date. Please try with other dates."
+                        responses=[]
+                        curr_question=""
                 else:
-                    ans="Sorry, the desired room type is full for the specified date. Please try with other dates."
-                    responses=[]
-                    curr_question=""
+                    if get_availability(dbname,responses[1],responses[2],room)>0:
+                        ans="Yes, there are rooms available."
+                        responses=[]
+                        curr_question=""
+                    else:
+                        ans="Sorry, the desired room type is full for the specified date. Please try with other dates."
+                        responses=[]
+                        curr_question=""
         elif curr_question=="Please provide me the booking ID.":
             if responses[0]=="Check":
                 start_date,end_date,room_id,room_type,price=get_booking_details(dbname,msg)
                 if not start_date:
                     ans="The booking ID does not exist. Please check again."
+                    responses=[]
+                    curr_question=""
                 else:
                     ans="Your booking details are as follow:\nCheck In Date: {}\nCheck Out Date: {}\nRoom Type: {}\nPrice: {}".format(start_date,end_date,room_type,price)
                     responses=[]
@@ -171,6 +183,8 @@ def wa_sms_reply():
                     curr_question=""
                 else:
                     ans="Booking  {} does not exist.".format(msg)
+                    responses=[]
+                    curr_question=""
     reply.body(ans)
     return str(resp)
  
